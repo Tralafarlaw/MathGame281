@@ -25,6 +25,7 @@ dependencies:
 # - haskell-say >= 1.0.0.0
 - gloss
 - QuickCheck >= 2.14.2
+- OpenGL
 library:
   source-dirs: src
 

@@ -31,7 +31,8 @@ library
   hs-source-dirs:
       src
   build-depends:
-      QuickCheck >=2.14.2
+      OpenGL
+    , QuickCheck >=2.14.2
     , base >=4.7 && <5
     , gloss
     , text
@@ -46,6 +47,7 @@ executable MathGame-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       MathGame
+    , OpenGL
     , QuickCheck >=2.14.2
     , base >=4.7 && <5
     , gloss
@@ -62,6 +64,7 @@ test-suite MathGame-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       MathGame
+    , OpenGL
     , QuickCheck >=2.14.2
     , base >=4.7 && <5
     , gloss
