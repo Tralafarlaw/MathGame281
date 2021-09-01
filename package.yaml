@@ -26,6 +26,7 @@ dependencies:
 - gloss
 - QuickCheck >= 2.14.2
 - OpenGL
+- GLUT
 - random
 library:
   source-dirs: src
