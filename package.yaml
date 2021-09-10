@@ -28,6 +28,7 @@ dependencies:
 - OpenGL
 - GLUT
 - random
+- gloss-juicy >= 0.2.3
 library:
   source-dirs: src
 

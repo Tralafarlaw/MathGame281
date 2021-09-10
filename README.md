@@ -21,7 +21,10 @@ Aca va la documentacion oficial de la librerias y otros que se añadan al proyec
 - [Stack](https://docs.haskellstack.org/en/stable/README/)
 - [QuickCheck](http://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html)
 - [Gloss](http://gloss.ouroborus.net/)
-- 
+- [Tutorial 1](https://andrew.gibiansky.com/blog/haskell/haskell-gloss/)
+- [Tutorial 2](https://mmhaskell.com/blog/2019/3/25/making-a-glossy-game-part-1)
+- [Tutorial 3](https://blog.jayway.com/2020/11/01/making-a-small-game-with-gloss/)
+- [Tutorial 4]()
 ---
 - [Gloss Wiki](https://hackage.haskell.org/package/gloss)
 -
@@ -62,6 +65,12 @@ Construye y ejecuta el codigo
 ```shell
 stack build
 stack exec MathGame-exe
+```
+
+Alternativa
+
+``` shell
+stack run
 ```
 
 ### REPL
