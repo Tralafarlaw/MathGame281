@@ -21,9 +21,311 @@ fondoMain = black
 m_window :: Display
 m_window = InWindow nombre (ancho, alto) (offset, offset)
 
-type Nivel = ((Int, Int), Int)
+data Resultado
+ = Bien
+ | Mal
+ | None
+ deriving (Eq)
 
--- Loading assets
+data Estado =
+  Estado
+  {
+    nivel  :: Int
+  , fond :: Int
+  , ans    :: Resultado
+  , buffer :: (Int, Int)
+  }
+
+-- type Nivel = ((Int, Int), Int)
+
+rnd_bkg :: [Picture] -> Picture
+rnd_bkg  x = head x
+
+-- render :: GameState -> [Picture] -> Picture 
+fromJust :: Maybe a -> a
+fromJust (Just a) = a
+fromJust Nothing = error "Oops, you goofed up, fool."
+
+loadJPG :: [Char] -> IO Picture
+loadJPG path = do
+  aux <- loadJuicyJPG path
+  case aux of
+    Just p -> return p
+    Nothing -> return Blank
+
+loadPNG :: [Char] -> IO Picture
+loadPNG path = do
+  aux <- loadJuicyPNG path
+  case aux of
+    Just p -> return p
+    Nothing -> return Blank
+
+main :: IO ()
+main = do
+  --Load aLl Assets
+        backgrounds  <- preload_bkg
+        problems <- loadProblems
+  --      test <- loadJPG "assets/1+2.jpg"
+  --Display the Window
+        play
+          m_window
+          fondoMain                    -- background color
+          1                           -- bfps
+          initialState
+          (`renderLevel` (backgrounds, problems))
+          inputHandler
+          updateState
+
+initialState :: Estado
+initialState = Estado
+  {
+    nivel = 0 -- Max level 144
+  , fond = 0
+  , ans = None
+  , buffer = (-1, 0)
+  }
+picture :: Picture
+picture
+        = Translate (-170) (-20) -- shift the text to the middle of the window
+        $ Scale 0.5 0.5          -- display it half the original size
+        $ Text "Hello World"     -- text to display
+
+w_em :: Float -> Float
+w_em x = x * (fromIntegral(ancho) / 100)
+
+h_em :: Float -> Float
+h_em x = x * (fromIntegral(alto) / 100)
+
+-- type Nivel = ((Int, Int), Int) -> (Fondo, Numero de problema), 0 si esta esperando entrada, 1 si esta correcta la entrada de la respuesta, 2 si esta mal
+-- | renderLevel renderiza el nivel con respescto al nivel o estado Actual
+
+renderLevel :: Estado -> ([Picture], [(Picture, Int)]) -> Picture
+renderLevel gs asets = pictures [fondo, problema, verificar]
+    where
+       verificar =  case (ans gs) of
+         Bien -> fonds!!6
+         Mal  -> fonds!!7
+         None -> Blank --Text (show (nivel gs))--Blank -- TODO: verificar devera ser vinculado al asset correspondiente usando un case
+       fondo = fonds!!(if nroF < 0  || nroF >= 144 then 8 else nroF)
+       problema = if nroP < 0 || nroP >= (length problemas) then Blank else (Scale 0.5 0.5 $ (fst (problemas!!nroP)))
+       fonds = fst asets
+       problemas = snd asets
+       nroP = nivel gs
+       nroF = fond gs
+
+-- | inputHandler controla los eventos de entrada por teclado del juego dado una entrada y el estado actual define un nuevo estado
+
+inputHandler :: Event -> Estado -> Estado
+inputHandler (EventKey (Char '2') Up _ _) gs = gs {buffer = (snd (buffer gs), 2)}
+inputHandler (EventKey (Char '3') Up _ _) gs = gs {buffer = (snd (buffer gs), 3)}
+inputHandler (EventKey (Char '4') Up _ _) gs = gs {buffer = (snd (buffer gs), 4)}
+inputHandler (EventKey (Char '5') Up _ _) gs = gs {buffer = (snd (buffer gs), 5)}
+inputHandler (EventKey (Char '6') Up _ _) gs = gs {buffer = (snd (buffer gs), 6)}
+inputHandler (EventKey (Char '7') Up _ _) gs = gs {buffer = (snd (buffer gs), 7)}
+inputHandler (EventKey (Char '8') Up _ _) gs = gs {buffer = (snd (buffer gs), 8)}
+inputHandler (EventKey (Char '9') Up _ _) gs = gs {buffer = (snd (buffer gs), 9)}
+inputHandler (EventKey (Char '0') Up _ _) gs = gs {buffer = (snd (buffer gs), 0)}
+inputHandler (EventKey (Char '1') Up _ _) gs = gs {buffer = (snd (buffer gs), 1)}
+inputHandler _ gs = gs
+
+-- | updateState se encarga de actaulizar el nivel en cada ciclo (creo)
+
+updateState :: Float -> Estado -> Estado
+updateState _ gs =
+  if (na /= -1) then
+    gs {
+      nivel = newN
+    , fond = newFond
+    , ans = newAns
+    , buffer = newB
+    }
+  else
+    gs {
+        nivel = -1
+      , fond = 8
+      , ans = None
+      , buffer = (1, 1)
+       }
+  where
+    newN = if (ans gs) == Bien && na < 144 then ((na) + 1) else (if na >= 0 && na <144 then na else -1)
+    newFond = (nivel gs) `mod` 6
+    newAns = case (ans gs) of
+      Bien -> None
+      Mal -> None
+      None -> if correcto then Bien else (if sw then None else Mal)
+    newB = if (ans gs) == None then (buffer gs) else (if respuestasig > 9 then (-1, -1) else (-1, 0))
+    numero = getNum (buffer gs)
+    respuesta = (if na >= 0 then respuestas!!na else -1)
+    respuestasig = respuestas!!((na) + 1)
+    correcto = (numero == respuesta) && na /= (-1)
+    sw = numero == (-1)
+    na = nivel gs
+
+
+getNum :: (Int, Int) -> Int
+getNum x = if (fst x) == -1 then -1 else  (10 * (fst x)) + (snd x)
+
+respuestas :: [Int]
+respuestas = [
+     2
+  ,  3
+  ,  4
+  ,  5
+  ,  6
+  ,  7
+  ,  8
+  ,  9
+  , 10
+  ,  1
+  ,  0
+  ,  1
+
+  ,  3
+  ,  4
+  ,  5
+  ,  6
+  ,  7
+  ,  8
+  ,  9
+  , 10
+  , 11
+  ,  2
+  ,  1
+  ,  0
+  ,  2
+
+  ,  4
+  ,  5
+  ,  6
+  ,  7
+  ,  8
+  ,  9
+  , 10
+  , 11
+  , 12
+  ,  3
+  ,  2
+  ,  1
+  ,  0
+  ,  3
+
+  , 5
+  , 6
+  , 7
+  , 8
+  , 9
+  , 10
+  , 11
+  , 12
+  , 13
+  , 4
+  , 3
+  , 2
+  , 1
+  , 0
+  ,  4
+
+  , 6
+  , 7
+  , 8
+  , 9
+  , 10
+  , 11
+  , 12
+  , 13
+  , 14
+  , 5
+  , 4
+  , 3
+  , 2
+  , 1
+  , 0
+  ,  5
+
+  , 7
+  , 8
+  , 9
+  , 10
+  , 11
+  , 12
+  , 13
+  , 14
+  , 15
+  , 6
+  , 5
+  , 4
+  , 3
+  , 2
+  , 1
+  , 0
+  ,  6
+
+  , 8
+  , 9
+  , 10
+  , 11
+  , 12
+  , 13
+  , 14
+  , 15
+  , 16
+  , 7
+  , 6
+  , 5
+  , 4
+  , 3
+  , 2
+  , 1
+  , 0
+  ,  7
+
+  , 9
+  , 10
+  , 11
+  , 12
+  , 13
+  , 14
+  , 15
+  , 16
+  , 17
+  , 8
+  , 7
+  , 6
+  , 5
+  , 4
+  , 3
+  , 2
+  , 1
+  , 0
+  ,  8
+
+  , 10
+  , 11
+  , 12
+  , 13
+  , 14
+  , 15
+  , 16
+  , 17
+  , 18
+  , 9
+  , 8
+  , 7
+  , 6
+  , 5
+  , 4
+  , 3
+  , 2
+  , 1
+  , 0
+  , 9
+  --Valor para evitar un overflow de la lista
+  ,-1
+  ,-1
+  ]
+
+
+  -- Loading assets
 preload_bkg :: IO [Picture]
 preload_bkg = do
         d_1 <-  loadJPG "assets/d_1.jpg"
@@ -32,7 +334,10 @@ preload_bkg = do
         d_4 <-  loadJPG "assets/d_4.jpg"
         d_5 <-  loadJPG "assets/d_5.jpg"
         d_6 <-  loadJPG "assets/d_6.jpg"
-        return [d_1, d_2, d_3, d_4, d_5, d_6]
+        bien<-  loadPNG "assets/bien.png"
+        mal <-  loadPNG "assets/mal.png"
+        cre <-  loadJPG "assets/creditos.jpg"
+        return [d_1, d_2, d_3, d_4, d_5, d_6, bien, mal, cre]
 
 loadProblems :: IO [(Picture, Int)]
 loadProblems = do
@@ -334,78 +639,7 @@ loadProblems = do
     (p_178  , 1 ),
     (p_179  , 0 ),
     (p_180  , 9 )
+    -- Relleno
+    --(Blank , 0)
+
          ]
--- GETuuuu A Random BackGround TODO: Hacer que bote elementos distintos en cada iteracion
-
-rnd_bkg :: [Picture] -> Picture
-rnd_bkg  x = head x
-
--- render :: GameState -> [Picture] -> Picture 
-fromJust :: Maybe a -> a
-fromJust (Just a) = a
-fromJust Nothing = error "Oops, you goofed up, fool."
-
-loadJPG :: [Char] -> IO Picture
-loadJPG path = do
-  aux <- loadJuicyJPG path
-  case aux of
-    Just p -> return p
-    Nothing -> return Blank
-
-
-
-main :: IO ()
-main = do
-  --Load aLl Assets
-        backgrounds  <- preload_bkg
-        problems <- loadProblems
-  --      test <- loadJPG "assets/1+2.jpg"
-  --Display the Window
-        play
-          m_window
-          fondoMain                    -- background color
-          30                           -- fps
-          initialState
-          (`renderLevel` (backgrounds, problems))
-          inputHandler
-          updateState
-
-initialState :: Nivel
-initialState = ((0,6),0)
-picture :: Picture
-picture
-        = Translate (-170) (-20) -- shift the text to the middle of the window
-        $ Scale 0.5 0.5          -- display it half the original size
-        $ Text "Hello World"     -- text to display
-
-w_em :: Float -> Float
-w_em x = x * (fromIntegral(ancho) / 100)
-
-h_em :: Float -> Float
-h_em x = x * (fromIntegral(alto) / 100)
-
--- type Nivel = ((Int, Int), Int) -> (Fondo, Numero de problema), 0 si esta esperando entrada, 1 si esta correcta la entrada de la respuesta, 2 si esta mal
--- | renderLevel renderiza el nivel con respescto al nivel o estado Actual
-
-renderLevel :: Nivel -> ([Picture], [(Picture, Int)]) -> Picture
-renderLevel estado asets = pictures [fondo, problema, verificar]
-    where
-       verificar = Blank -- TODO: verificar devera ser vinculado al asset correspondiente usando un case
-       fondo = fondos!!nroF
-       problema = Scale 0.5 0.5 $ (fst (problemas!!nroP))
-       fondos = fst asets
-       problemas = snd asets
-       nroP = snd (fst estado)
-       nroF = fst (fst estado)
-
--- | inputHandler controla los eventos de entrada por teclado del juego dado una entrada y el estado actual define un nuevo estado
--- TODO: Hacer la funcion para controlar los eventos
-
-inputHandler :: Event -> Nivel -> Nivel
-inputHandler _ gs = gs
-
--- | updateState se encarga de actaulizar el nivel en cada ciclo (creo)
--- TODO: Por lo que parece la funcion no es tan necesaria en este caso porque  creo que es lo actualiza el mundo de forma pasiva sin interaccion del usuario entonces al solo actualizarse el juego cuando se presiona una tecla simplemente esta como relleno por ahora
-
-updateState :: Float -> Nivel -> Nivel
-updateState _ gs = gs
